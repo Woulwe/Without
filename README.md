@@ -1,10 +1,7 @@
 # Woulwe Solo
 
-Соло-игра Woulwe: нажимай кнопки и проходи испытания.
+3D solo game made with Godot 4.
 
-## Android / Codemagic
-Репозиторий уже содержит `codemagic.yaml`. В Codemagic выбери этот репозиторий и workflow **Woulwe Solo Android**.
+Walk around a 3D world, approach the blue challenge blocks and complete them for points. Android touch joystick and WASD keyboard controls are included.
 
-Для Unity-сборки нужны действительные Unity credentials/license variables в Codemagic: UNITY_SERIAL, UNITY_EMAIL и UNITY_PASSWORD.
-
-Результат: `WoulweSolo.apk`.
+No Unity project or Unity license is used.
