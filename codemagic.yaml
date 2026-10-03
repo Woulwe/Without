@@ -1,39 +1,49 @@
 workflows:
-  android-unity:
-    name: Woulwe Solo Android
-    max_build_duration: 120
-
-    environment:
-      unity: 2022.3.62f2
-      groups:
-        - unity_credentials
-
+  godot-android:
+    name: Woulwe Solo Android (Godot)
+    max_build_duration: 60
+    instance_type: linux_x2
     scripts:
-      - name: Check Unity credentials
+      - name: Install Godot 4.4.1
         script: |
           set -e
-          test -n "${UNITY_EMAIL:-}" || { echo "ERROR: UNITY_EMAIL is not configured in Codemagic."; exit 1; }
-          test -n "${UNITY_PASSWORD:-}" || { echo "ERROR: UNITY_PASSWORD is not configured in Codemagic."; exit 1; }
-          test -n "${UNITY_SERIAL:-}" || { echo "ERROR: UNITY_SERIAL is not configured in Codemagic."; exit 1; }
-          echo "Unity credential variables are present."
-
-      - name: Activate Unity license
+          mkdir -p $HOME/godot
+          curl -L --fail --retry 3 -o $HOME/godot/godot.zip "https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip"
+          unzip -q $HOME/godot/godot.zip -d $HOME/godot
+          mv $HOME/godot/Godot_v4.4.1-stable_linux.x86_64 $HOME/godot/godot
+          chmod +x $HOME/godot/godot
+      - name: Install Android export templates
         script: |
           set -e
-          "${UNITY_HOME}/Contents/MacOS/Unity"             -batchmode             -quit             -nographics             -logFile -             -serial "${UNITY_SERIAL}"             -username "${UNITY_EMAIL}"             -password "${UNITY_PASSWORD}"
-
+          mkdir -p $HOME/.local/share/godot/export_templates/4.4.1.stable
+          curl -L --fail --retry 3 -o $HOME/godot/templates.tpz "https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz"
+          unzip -q $HOME/godot/templates.tpz -d $HOME/godot/templates
+          cp -R $HOME/godot/templates/templates/* $HOME/.local/share/godot/export_templates/4.4.1.stable/
+      - name: Configure Android export
+        script: |
+          set -e
+          mkdir -p build
+          cat > export_presets.cfg <<'EOF'
+          [preset.0]
+          name="Android"
+          platform="Android"
+          runnable=true
+          export_filter="all_resources"
+          export_path="build/WoulweSolo.apk"
+          [preset.0.options]
+          package/unique_name="com.woulwe.solo"
+          package/name="Woulwe Solo"
+          version/code=1
+          version/name="1.0.0"
+          architecture/arm64-v8a=true
+          architecture/armeabi-v7a=false
+          architecture/x86_64=false
+          EOF
       - name: Build Android APK
         script: |
           set -e
-          mkdir -p build/outputs
-          "${UNITY_HOME}/Contents/MacOS/Unity"             -batchmode             -quit             -nographics             -logFile -             -projectPath "${CM_BUILD_DIR}"             -buildTarget Android             -executeMethod BuildScript.BuildAndroid
-
+          mkdir -p build
+          $HOME/godot/godot --headless --path $CM_BUILD_DIR --editor --quit
+          $HOME/godot/godot --headless --path $CM_BUILD_DIR --export-release Android $CM_BUILD_DIR/build/WoulweSolo.apk
     artifacts:
-      - build/outputs/*.apk
-      - build/outputs/*.aab
-
-    publishing:
-      scripts:
-        - name: Deactivate Unity license
-          script: |
-            "${UNITY_HOME}/Contents/MacOS/Unity"               -batchmode               -quit               -nographics               -logFile -               -returnlicense               -username "${UNITY_EMAIL}"               -password "${UNITY_PASSWORD}" || true
+      - build/*.apk
