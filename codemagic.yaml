@@ -1,7 +1,7 @@
 workflows:
   android-unity:
     name: Woulwe Solo Android
-    max_build_duration: 60
+    max_build_duration: 120
 
     environment:
       unity: 2022.3.62f2
@@ -9,20 +9,31 @@ workflows:
         - unity_credentials
 
     scripts:
+      - name: Check Unity credentials
+        script: |
+          set -e
+          test -n "${UNITY_EMAIL:-}" || { echo "ERROR: UNITY_EMAIL is not configured in Codemagic."; exit 1; }
+          test -n "${UNITY_PASSWORD:-}" || { echo "ERROR: UNITY_PASSWORD is not configured in Codemagic."; exit 1; }
+          test -n "${UNITY_SERIAL:-}" || { echo "ERROR: UNITY_SERIAL is not configured in Codemagic."; exit 1; }
+          echo "Unity credential variables are present."
+
       - name: Activate Unity license
         script: |
-          $UNITY_HOME/Contents/MacOS/Unity -batchmode -quit -nographics -logFile - -serial $UNITY_SERIAL -username $UNITY_EMAIL -password $UNITY_PASSWORD
+          set -e
+          "${UNITY_HOME}/Contents/MacOS/Unity"             -batchmode             -quit             -nographics             -logFile -             -serial "${UNITY_SERIAL}"             -username "${UNITY_EMAIL}"             -password "${UNITY_PASSWORD}"
 
       - name: Build Android APK
         script: |
+          set -e
           mkdir -p build/outputs
-          $UNITY_HOME/Contents/MacOS/Unity -batchmode -quit -nographics -projectPath . -executeMethod BuildScript.BuildAndroid -logFile -
+          "${UNITY_HOME}/Contents/MacOS/Unity"             -batchmode             -quit             -nographics             -logFile -             -projectPath "${CM_BUILD_DIR}"             -buildTarget Android             -executeMethod BuildScript.BuildAndroid
 
     artifacts:
       - build/outputs/*.apk
+      - build/outputs/*.aab
 
     publishing:
       scripts:
         - name: Deactivate Unity license
           script: |
-            $UNITY_HOME/Contents/MacOS/Unity -batchmode -quit -nographics -logFile - -returnlicense -username $UNITY_EMAIL -password $UNITY_PASSWORD || true
+            "${UNITY_HOME}/Contents/MacOS/Unity"               -batchmode               -quit               -nographics               -logFile -               -returnlicense               -username "${UNITY_EMAIL}"               -password "${UNITY_PASSWORD}" || true
