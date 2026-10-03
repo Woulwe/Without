@@ -25,4 +25,4 @@ workflows:
       scripts:
         - name: Deactivate Unity license
           script: |
-            $UNITY_HOME/Contents/MacOS/Unity -batchmode -quit -nographics -logFile - -returnlicense -username $UNITY_EMAIL -password $UNITY_PASSWORD
+            $UNITY_HOME/Contents/MacOS/Unity -batchmode -quit -nographics -logFile - -returnlicense -username $UNITY_EMAIL -password $UNITY_PASSWORD || true
