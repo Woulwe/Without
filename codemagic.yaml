@@ -1,0 +1,25 @@
+workflows:
+  android-unity:
+    name: Woulwe Solo Android
+    max_build_duration: 60
+    environment:
+      unity: 2022.3.50f1
+      vars:
+        UNITY_SERIAL: $UNITY_SERIAL
+        UNITY_EMAIL: $UNITY_EMAIL
+        UNITY_PASSWORD: $UNITY_PASSWORD
+    scripts:
+      - name: Activate Unity license
+        script: |
+          $UNITY_HOME/Editor/Unity -batchmode -quit -nographics -serial "$UNITY_SERIAL" -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD"
+      - name: Build Android APK
+        script: |
+          mkdir -p build/outputs
+          $UNITY_HOME/Editor/Unity -batchmode -quit -nographics -projectPath . -executeMethod BuildScript.BuildAndroid -logFile -
+    artifacts:
+      - build/outputs/*.apk
+    publishing:
+      scripts:
+        - name: Deactivate Unity license
+          script: |
+            $UNITY_HOME/Editor/Unity -batchmode -quit -returnlicense
