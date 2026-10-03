@@ -2,24 +2,32 @@ workflows:
   android-unity:
     name: Woulwe Solo Android
     max_build_duration: 60
+
     environment:
-      unity: 2022.3.50f1
+      # Codemagic supports this exact Unity LTS version.
+      # The project was created with 2022.3.50f1; Unity 2022.3.62f2
+      # is the supported 2022 LTS version currently available to Codemagic.
+      unity: 2022.3.62f2
       vars:
         UNITY_SERIAL: $UNITY_SERIAL
         UNITY_EMAIL: $UNITY_EMAIL
         UNITY_PASSWORD: $UNITY_PASSWORD
+
     scripts:
       - name: Activate Unity license
         script: |
-          $UNITY_HOME/Editor/Unity -batchmode -quit -nographics -serial "$UNITY_SERIAL" -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD"
+          $UNITY_HOME/Contents/MacOS/Unity -batchmode -quit -nographics -logFile -             -serial "$UNITY_SERIAL"             -username "$UNITY_EMAIL"             -password "$UNITY_PASSWORD"
+
       - name: Build Android APK
         script: |
           mkdir -p build/outputs
-          $UNITY_HOME/Editor/Unity -batchmode -quit -nographics -projectPath . -executeMethod BuildScript.BuildAndroid -logFile -
+          $UNITY_HOME/Contents/MacOS/Unity -batchmode -quit -nographics             -projectPath .             -executeMethod BuildScript.BuildAndroid             -logFile -
+
     artifacts:
       - build/outputs/*.apk
+
     publishing:
       scripts:
         - name: Deactivate Unity license
           script: |
-            $UNITY_HOME/Editor/Unity -batchmode -quit -returnlicense
+            $UNITY_HOME/Contents/MacOS/Unity -batchmode -quit -nographics -logFile -               -returnlicense               -username "$UNITY_EMAIL"               -password "$UNITY_PASSWORD"
